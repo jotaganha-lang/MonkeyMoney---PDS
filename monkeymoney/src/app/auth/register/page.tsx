@@ -129,9 +129,4 @@ export default function RegisterPage() {
     </div>
   );
 }
-ºP
-        </p>
-      </div>
-    </div>
-  );
-}
+
