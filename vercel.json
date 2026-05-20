@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "rootDirectory": "monkeymoney",
+  "builds": [
+    {
+      "src": "monkeymoney/package.json",
+      "use": "@vercel/next"
+    }
+  ]
+}
