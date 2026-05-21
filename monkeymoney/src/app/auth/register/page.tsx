@@ -73,7 +73,7 @@ export default function RegisterPage() {
               <input
                 {...register("fullName")}
                 placeholder="O teu nome"
-                className="w-full rounded-2xl border border-white/5 bg-white/5 px-5 py-3.5 text-white placeholder-slate-600 transition-all focus:border-emerald-500/50 focus:bg-white/10 focus:outline-none"
+                className="w-full rounded-2xl border border-gray-500/10 bg-gray-800/5 px-5 py-3.5 text-white placeholder-slate-600 transition-all focus:border-emerald-500/50 focus:bg-gray-700/10 focus:outline-none"
               />
               {errors.fullName && <p className="mt-1.5 text-xs font-medium text-rose-400">{errors.fullName.message}</p>}
             </div>
@@ -83,7 +83,7 @@ export default function RegisterPage() {
               <input
                 {...register("email")}
                 placeholder="o.teu@email.com"
-                className="w-full rounded-2xl border border-white/5 bg-white/5 px-5 py-3.5 text-white placeholder-slate-600 transition-all focus:border-emerald-500/50 focus:bg-white/10 focus:outline-none"
+                className="w-full rounded-2xl border border-gray-500/10 bg-gray-800/5 px-5 py-3.5 text-white placeholder-slate-600 transition-all focus:border-emerald-500/50 focus:bg-gray-700/10 focus:outline-none"
               />
               {errors.email && <p className="mt-1.5 text-xs font-medium text-rose-400">{errors.email.message}</p>}
             </div>
@@ -94,7 +94,7 @@ export default function RegisterPage() {
                 type="password"
                 {...register("password")}
                 placeholder="••••••••"
-                className="w-full rounded-2xl border border-white/5 bg-white/5 px-5 py-3.5 text-white placeholder-slate-600 transition-all focus:border-emerald-500/50 focus:bg-white/10 focus:outline-none"
+                className="w-full rounded-2xl border border-gray-500/10 bg-gray-800/5 px-5 py-3.5 text-white placeholder-slate-600 transition-all focus:border-emerald-500/50 focus:bg-gray-700/10 focus:outline-none"
               />
               {errors.password && <p className="mt-1.5 text-xs font-medium text-rose-400">{errors.password.message}</p>}
             </div>
@@ -105,7 +105,7 @@ export default function RegisterPage() {
                 type="password"
                 {...register("confirmPassword")}
                 placeholder="••••••••"
-                className="w-full rounded-2xl border border-white/5 bg-white/5 px-5 py-3.5 text-white placeholder-slate-600 transition-all focus:border-emerald-500/50 focus:bg-white/10 focus:outline-none"
+                className="w-full rounded-2xl border border-gray-500/10 bg-gray-800/5 px-5 py-3.5 text-white placeholder-slate-600 transition-all focus:border-emerald-500/50 focus:bg-gray-700/10 focus:outline-none"
               />
               {errors.confirmPassword && <p className="mt-1.5 text-xs font-medium text-rose-400">{errors.confirmPassword.message}</p>}
             </div>
