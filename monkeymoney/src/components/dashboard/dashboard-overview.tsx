@@ -1,21 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { currency } from "@/lib/utils";
 import Link from "next/link";
-
-type Tx = { id: string; title: string; type: "income" | "expense"; amount: number; category: string; date: string };
+import { useTransactions } from "@/hooks/use-transactions";
 
 export function DashboardOverview() {
-  const [txs, setTxs] = useState<Tx[]>([]);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("mm_transactions");
-      if (stored) setTxs(JSON.parse(stored));
-    } catch { /* ignore */ }
-  }, []);
+  const { txs, ready, authLoading } = useTransactions();
 
   const totalIncome = txs.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
   const totalExpense = txs.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
@@ -39,7 +30,7 @@ export function DashboardOverview() {
     }));
 
   const recent = [...txs].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
-  const isEmpty = txs.length === 0;
+  const isEmpty = ready && !authLoading && txs.length === 0;
 
   return (
     <section className="space-y-5">

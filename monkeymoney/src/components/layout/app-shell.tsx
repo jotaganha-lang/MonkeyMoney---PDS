@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* Header */}
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white shadow-sm">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3">

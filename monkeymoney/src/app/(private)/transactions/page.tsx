@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { currency } from "@/lib/utils";
+import { useTransactions } from "@/hooks/use-transactions";
+import type { Transaction } from "@/lib/transaction-storage";
 
 const schema = z.object({
   title: z.string().min(2, "Mínimo 2 caracteres"),
@@ -16,19 +18,13 @@ const schema = z.object({
   description: z.string().optional(),
 });
 
-type Tx = z.infer<typeof schema> & { id: string };
-
-const STORAGE_KEY = "mm_transactions";
-function loadTxs(): Tx[] {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]"); } catch { return []; }
-}
-function saveTxs(txs: Tx[]) { localStorage.setItem(STORAGE_KEY, JSON.stringify(txs)); }
+type Tx = Transaction;
 
 const EXPENSE_CATEGORIES = ["Alimentação", "Transportes", "Lazer", "Saúde", "Educação", "Vestuário", "Habitação", "Subscrições", "Outros"];
 const INCOME_CATEGORIES = ["Salário", "Bolsa", "Mesada", "Freelance", "Investimentos", "Outros"];
 
 export default function TransactionsPage() {
-  const [rows, setRows] = useState<Tx[]>([]);
+  const { txs: rows, setTxs: saveRows } = useTransactions();
   const [filterType, setFilterType] = useState("all");
   const [query, setQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -44,9 +40,7 @@ export default function TransactionsPage() {
 
   const txType = watch("type");
 
-  useEffect(() => { setRows(loadTxs()); }, []);
-
-  const onSubmit = (values: z.infer<typeof schema>) => {
+  const onSubmit = async (values: z.infer<typeof schema>) => {
     let updated: Tx[];
     if (editingId) {
       updated = rows.map((r) => (r.id === editingId ? { ...r, ...values } : r));
@@ -54,8 +48,7 @@ export default function TransactionsPage() {
     } else {
       updated = [{ ...values, id: crypto.randomUUID() }, ...rows];
     }
-    setRows(updated);
-    saveTxs(updated);
+    await saveRows(updated);
     reset({ type: values.type, date: values.date });
     setShowForm(false);
   };
@@ -68,10 +61,9 @@ export default function TransactionsPage() {
     [rows, filterType, query],
   );
 
-  function deleteRow(id: string) {
+  async function deleteRow(id: string) {
     const updated = rows.filter((r) => r.id !== id);
-    setRows(updated);
-    saveTxs(updated);
+    await saveRows(updated);
   }
 
   function startEdit(r: Tx) {
@@ -106,19 +98,19 @@ export default function TransactionsPage() {
         <div className="rounded-2xl border border-teal-200 bg-teal-50 p-5">
           <h2 className="font-bold text-teal-800 mb-3">{editingId ? "Editar movimento" : "Novo movimento"}</h2>
           <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <input {...register("title")} placeholder="Título (ex: Supermercado)" className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-teal-400 focus:outline-none" />
-            <select {...register("type")} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-teal-400 focus:outline-none">
+            <input {...register("title")} placeholder="Título (ex: Supermercado)" className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-teal-400 focus:outline-none" />
+            <select {...register("type")} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-teal-400 focus:outline-none">
               <option value="expense">💸 Despesa</option>
               <option value="income">💰 Receita</option>
             </select>
-            <input type="number" step="0.01" {...register("amount", { valueAsNumber: true })} placeholder="Valor (€)" className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-teal-400 focus:outline-none" />
-            <select {...register("category")} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-teal-400 focus:outline-none">
+            <input type="number" step="0.01" {...register("amount", { valueAsNumber: true })} placeholder="Valor (€)" className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-teal-400 focus:outline-none" />
+            <select {...register("category")} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-teal-400 focus:outline-none">
               <option value="">Seleciona categoria</option>
               {(txType === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
-            <select {...register("paymentMethod")} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-teal-400 focus:outline-none">
+            <select {...register("paymentMethod")} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-teal-400 focus:outline-none">
               <option value="">Método de pagamento</option>
               <option value="Multibanco">Multibanco</option>
               <option value="Cartão de crédito">Cartão de crédito</option>
@@ -126,8 +118,8 @@ export default function TransactionsPage() {
               <option value="Transferência">Transferência</option>
               <option value="MB Way">MB Way</option>
             </select>
-            <input type="date" {...register("date")} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-teal-400 focus:outline-none" />
-            <textarea {...register("description")} placeholder="Notas (opcional)" rows={2} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-teal-400 focus:outline-none sm:col-span-2 lg:col-span-3" />
+            <input type="date" {...register("date")} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-teal-400 focus:outline-none" />
+            <textarea {...register("description")} placeholder="Notas (opcional)" rows={2} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-teal-400 focus:outline-none sm:col-span-2 lg:col-span-3" />
             {Object.values(errors)[0] && (
               <p className="sm:col-span-2 lg:col-span-3 text-sm text-red-600">
                 {String(Object.values(errors)[0]?.message ?? "Preenche todos os campos obrigatórios.")}
@@ -151,7 +143,7 @@ export default function TransactionsPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="🔍 Pesquisar..."
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-teal-400 focus:outline-none"
+          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:border-teal-400 focus:outline-none"
         />
         {["all", "income", "expense"].map((t) => (
           <button

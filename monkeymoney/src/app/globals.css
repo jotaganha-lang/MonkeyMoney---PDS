@@ -59,6 +59,14 @@ button {
   transition: all 0.2s ease;
 }
 
-input::placeholder {
+input::placeholder,
+textarea::placeholder {
   color: #475569;
+}
+
+/* Private app: readable text on white form fields (body defaults to light text) */
+.text-slate-900 input:not([class*="text-white"]),
+.text-slate-900 select:not([class*="text-white"]),
+.text-slate-900 textarea:not([class*="text-white"]) {
+  color: #0f172a;
 }

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { currency } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
+import { loadUserJson, saveUserJson } from "@/lib/user-storage";
 
 type Goal = {
   id: string;
@@ -14,21 +16,24 @@ type Goal = {
 
 const STORAGE_KEY = "mm_goals";
 
-function loadGoals(): Goal[] {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]"); } catch { return []; }
-}
-function saveGoals(g: Goal[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(g));
-}
-
 export default function GoalsPage() {
+  const { user, loading: authLoading } = useAuth();
+  const userId = user?.id ?? null;
   const [goals, setGoals] = useState<Goal[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", target: "", deposit: "" });
   const [depositId, setDepositId] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState("");
 
-  useEffect(() => { setGoals(loadGoals()); }, []);
+  useEffect(() => {
+    if (authLoading) return;
+    setGoals(loadUserJson<Goal[]>(STORAGE_KEY, userId, []));
+  }, [authLoading, userId]);
+
+  function persistGoals(g: Goal[]) {
+    setGoals(g);
+    saveUserJson(STORAGE_KEY, userId, g);
+  }
 
   function addGoal() {
     if (!form.title || !form.target) return;
@@ -40,9 +45,7 @@ export default function GoalsPage() {
       current: 0,
       status: "active",
     };
-    const updated = [newGoal, ...goals];
-    setGoals(updated);
-    saveGoals(updated);
+    persistGoals([newGoal, ...goals]);
     setForm({ title: "", description: "", target: "", deposit: "" });
     setShowForm(false);
   }
@@ -53,16 +56,13 @@ export default function GoalsPage() {
       const newCurrent = Math.min(g.target, g.current + amount);
       return { ...g, current: newCurrent, status: newCurrent >= g.target ? "completed" as const : g.status };
     });
-    setGoals(updated);
-    saveGoals(updated);
+    persistGoals(updated);
     setDepositId(null);
     setDepositAmount("");
   }
 
   function deleteGoal(id: string) {
-    const updated = goals.filter((g) => g.id !== id);
-    setGoals(updated);
-    saveGoals(updated);
+    persistGoals(goals.filter((g) => g.id !== id));
   }
 
   const statusLabel: Record<string, string> = { active: "Ativa", paused: "Pausada", completed: "Concluída ✓" };

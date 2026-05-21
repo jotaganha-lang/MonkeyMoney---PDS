@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { currency } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
+import { loadUserJson, saveUserJson } from "@/lib/user-storage";
 
 type BudgetCategory = {
   id: string;
@@ -22,13 +24,9 @@ const DEFAULT_CATEGORIES: BudgetCategory[] = [
 
 const STORAGE_KEY = "mm_budget";
 
-function load(): BudgetCategory[] {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null") ?? DEFAULT_CATEGORIES; }
-  catch { return DEFAULT_CATEGORIES; }
-}
-function save(data: BudgetCategory[]) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-
 export default function BudgetPage() {
+  const { user, loading: authLoading } = useAuth();
+  const userId = user?.id ?? null;
   const [cats, setCats] = useState<BudgetCategory[]>([]);
   const [editId, setEditId] = useState<string | null>(null);
   const [spendId, setSpendId] = useState<string | null>(null);
@@ -37,9 +35,15 @@ export default function BudgetPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newCat, setNewCat] = useState({ name: "", icon: "💰", limit: "" });
 
-  useEffect(() => { setCats(load()); }, []);
+  useEffect(() => {
+    if (authLoading) return;
+    setCats(loadUserJson(STORAGE_KEY, userId, DEFAULT_CATEGORIES));
+  }, [authLoading, userId]);
 
-  function updateCats(updated: BudgetCategory[]) { setCats(updated); save(updated); }
+  function updateCats(updated: BudgetCategory[]) {
+    setCats(updated);
+    saveUserJson(STORAGE_KEY, userId, updated);
+  }
 
   function addSpend(id: string) {
     const amount = parseFloat(spendAmount);
