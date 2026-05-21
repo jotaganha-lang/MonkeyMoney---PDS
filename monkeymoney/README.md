@@ -24,6 +24,7 @@ Slogan: **Aprender a gerir hoje para viver melhor amanha.**
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 3. Executar schema SQL em Supabase: `supabase/schema.sql`
+4. **MFA (Vercel):** ver `supabase/email-template-mfa-otp.html`. No Supabase: Site URL = URL da Vercel; Redirect URLs só com esse domínio. Na Vercel: variável `NEXT_PUBLIC_SITE_URL` = mesmo URL.
 
 ## Desenvolvimento
 

@@ -44,7 +44,11 @@ export default function SecurityPage() {
       toast.error("Erro ao guardar. Certifica-te que executaste o SQL no Supabase.");
     } else {
       setMfaEnabled(newValue);
-      toast.success(newValue ? "MFA ativado! No próximo login receberás um código por email." : "MFA desativado.");
+      toast.success(
+        newValue
+          ? "MFA ativado! No próximo login receberás um código por email (não um link)."
+          : "MFA desativado.",
+      );
     }
     setSaving(false);
   }
@@ -59,7 +63,7 @@ export default function SecurityPage() {
           <div>
             <h2 className="font-bold text-slate-900">Verificação em dois passos (MFA)</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Quando ativado, cada login exige um código de 6 dígitos enviado para <strong>{userEmail || "o teu email"}</strong>.
+              Quando ativado, cada login exige um código numérico enviado para <strong>{userEmail || "o teu email"}</strong> (6 ou 8 dígitos, conforme o Supabase).
               O código expira em 15 minutos.
             </p>
           </div>
@@ -73,7 +77,7 @@ export default function SecurityPage() {
           <ol className="space-y-1 text-sm text-slate-600 list-decimal list-inside">
             <li>Fazes login com email e password normalmente</li>
             <li>Recebemos automaticamente um código único para o teu email</li>
-            <li>Introduzes o código de 6 dígitos (válido 15 min)</li>
+            <li>Introduzes o código do email (válido 15 min)</li>
             <li>Acedes à conta em segurança 🔒</li>
           </ol>
         </div>

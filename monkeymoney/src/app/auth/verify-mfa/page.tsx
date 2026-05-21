@@ -3,17 +3,29 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { EMAIL_OTP_LENGTH, sendMfaOtpEmail } from "@/lib/auth-mfa";
 import { toast } from "sonner";
 
 const EXPIRY_MINUTES = 15;
+const emptyCode = () => Array.from({ length: EMAIL_OTP_LENGTH }, () => "");
 
 function VerifyMfaForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
+  const linkError = searchParams.get("error") === "link_invalid";
   const supabase = createClient();
 
-  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  useEffect(() => {
+    if (linkError) {
+      toast.error(
+        "Recebeste um link em vez do código? Configura o template de email no Supabase (ver supabase/email-template-mfa-otp.html) e pede um novo código.",
+        { duration: 8000 },
+      );
+    }
+  }, [linkError]);
+
+  const [code, setCode] = useState(emptyCode);
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(EXPIRY_MINUTES * 60);
@@ -29,13 +41,14 @@ function VerifyMfaForm() {
   const minutes = Math.floor(secondsLeft / 60);
   const seconds = secondsLeft % 60;
   const isExpired = secondsLeft === 0;
+  const lastIndex = EMAIL_OTP_LENGTH - 1;
 
   function handleInput(index: number, value: string) {
     if (!/^\d*$/.test(value)) return;
     const next = [...code];
     next[index] = value.slice(-1);
     setCode(next);
-    if (value && index < 5) refs.current[index + 1]?.focus();
+    if (value && index < lastIndex) refs.current[index + 1]?.focus();
   }
 
   function handleKeyDown(index: number, e: React.KeyboardEvent) {
@@ -44,15 +57,32 @@ function VerifyMfaForm() {
     }
   }
 
+  function handlePaste(e: React.ClipboardEvent) {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, EMAIL_OTP_LENGTH);
+    if (!pasted) return;
+    e.preventDefault();
+    const next = emptyCode();
+    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
+    setCode(next);
+    const focusIndex = Math.min(pasted.length, lastIndex);
+    refs.current[focusIndex]?.focus();
+  }
+
   async function handleVerify() {
     const token = code.join("");
-    if (token.length !== 6) { toast.error("Introduz os 6 dígitos."); return; }
-    if (!email) { toast.error("Email em falta. Volta ao login."); return; }
+    if (token.length !== EMAIL_OTP_LENGTH) {
+      toast.error(`Introduz os ${EMAIL_OTP_LENGTH} dígitos do email.`);
+      return;
+    }
+    if (!email) {
+      toast.error("Email em falta. Volta ao login.");
+      return;
+    }
     setVerifying(true);
     const { error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
     if (error) {
       toast.error("Código inválido ou expirado. Tenta novamente.");
-      setCode(["", "", "", "", "", ""]);
+      setCode(emptyCode());
       refs.current[0]?.focus();
     } else {
       toast.success("Verificação concluída! Bem-vindo de volta.");
@@ -64,25 +94,28 @@ function VerifyMfaForm() {
   async function handleResend() {
     if (!email) return;
     setResending(true);
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+    const { error } = await sendMfaOtpEmail(supabase, email);
     if (error) {
       toast.error("Erro ao reenviar. Tenta mais tarde.");
     } else {
       setSecondsLeft(EXPIRY_MINUTES * 60);
-      setCode(["", "", "", "", "", ""]);
-      toast.success("Novo código enviado para o teu email!");
+      setCode(emptyCode());
+      toast.success(`Novo código de ${EMAIL_OTP_LENGTH} dígitos enviado para o teu email!`);
     }
     setResending(false);
   }
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-lg">
       <div className="mb-8 text-center">
         <span className="text-5xl">🔐</span>
         <h1 className="mt-4 text-2xl font-black text-white">Verificação em dois passos</h1>
         <p className="mt-2 text-sm text-slate-400">
-          Código enviado para<br />
+          Introduz o código de <strong className="text-white">{EMAIL_OTP_LENGTH} dígitos</strong> enviado para<br />
           <span className="font-semibold text-teal-400">{email || "o teu email"}</span>
+        </p>
+        <p className="mt-2 text-xs text-slate-500">
+          Podes colar o número completo do email (Ctrl+V).
         </p>
       </div>
 
@@ -93,7 +126,7 @@ function VerifyMfaForm() {
           )}
         </div>
 
-        <div className="flex justify-center gap-3">
+        <div className="flex justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
           {code.map((digit, i) => (
             <input
               key={i}
@@ -105,14 +138,14 @@ function VerifyMfaForm() {
               onChange={(e) => handleInput(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
               disabled={isExpired}
-              className="h-14 w-12 rounded-xl border border-white/20 bg-white/10 text-center text-xl font-bold text-white focus:border-teal-400 focus:outline-none disabled:opacity-40 transition"
+              className="h-14 w-9 sm:w-11 rounded-xl border border-white/20 bg-white/10 text-center text-lg sm:text-xl font-bold text-white focus:border-teal-400 focus:outline-none disabled:opacity-40 transition"
             />
           ))}
         </div>
 
         <button
           onClick={handleVerify}
-          disabled={verifying || isExpired || code.join("").length < 6}
+          disabled={verifying || isExpired || code.join("").length < EMAIL_OTP_LENGTH}
           className="mt-6 w-full rounded-xl bg-teal-500 py-3 font-bold text-white transition hover:bg-teal-400 disabled:opacity-50"
         >
           {verifying ? "A verificar..." : "Verificar código"}

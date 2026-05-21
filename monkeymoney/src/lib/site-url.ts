@@ -1,0 +1,8 @@
+/** URL pública da app (evita links para localhost em produção). */
+export function getSiteUrl(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  if (typeof window !== "undefined") return window.location.origin;
+  return "http://localhost:3000";
+}

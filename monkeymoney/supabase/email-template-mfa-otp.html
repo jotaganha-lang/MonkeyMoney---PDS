@@ -1,0 +1,31 @@
+<!--
+  CONFIGURAR NO SUPABASE (obrigatório para MFA por código)
+  App publicada na VERCEL — usa só o teu domínio Vercel (não localhost).
+
+  1. Copia o URL da Vercel: Project → Settings → Domains
+     Exemplo: https://monkey-money.vercel.app
+
+  2. Dashboard → Authentication → URL Configuration
+     - Site URL: https://TEU-PROJETO.vercel.app
+     - Redirect URLs (só estas duas, com o TEU URL):
+         https://TEU-PROJETO.vercel.app/auth/confirm
+         https://TEU-PROJETO.vercel.app/auth/verify-mfa
+
+  3. Vercel → Project → Settings → Environment Variables
+     - NEXT_PUBLIC_SITE_URL = https://TEU-PROJETO.vercel.app
+     (Production + Preview)
+
+  4. Dashboard → Authentication → Email Templates → "Magic Link"
+     - Substituir o corpo pelo HTML abaixo (sem {{ .ConfirmationURL }})
+
+  Com {{ .Token }} o email traz o código (6 ou 8 dígitos — ver Auth → Email → OTP length).
+  A app usa 8 por defeito (NEXT_PUBLIC_EMAIL_OTP_LENGTH na Vercel se for 6).
+-->
+
+<h2>Código de verificação MonkeyMoney</h2>
+<p>Utiliza este código na página de verificação (válido 15 minutos):</p>
+<p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 24px 0;">
+  {{ .Token }}
+</p>
+<p>Introduz todos os dígitos em <strong>/auth/verify-mfa</strong> após iniciares sessão com email e password.</p>
+<p style="color: #64748b; font-size: 12px;">Se não pediste este código, ignora este email.</p>

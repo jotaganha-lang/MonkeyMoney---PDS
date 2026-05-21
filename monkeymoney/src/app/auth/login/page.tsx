@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { sendMfaOtpEmail } from "@/lib/auth-mfa";
 import { toast } from "sonner";
 
 const schema = z.object({
@@ -40,10 +41,7 @@ export default function LoginPage() {
 
     if (profile?.mfa_enabled) {
       await supabase.auth.signOut();
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email: values.email,
-        options: { shouldCreateUser: false },
-      });
+      const { error: otpError } = await sendMfaOtpEmail(supabase, values.email);
 
       if (otpError) {
         toast.error("Erro ao enviar código. Tenta novamente.");
