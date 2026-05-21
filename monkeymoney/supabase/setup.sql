@@ -7,6 +7,11 @@
 create table if not exists public.profiles (
   id uuid references auth.users(id) on delete cascade primary key,
   full_name text,
+  username text unique,
+  avatar_url text,
+  date_of_birth date,
+  country text,
+  currency text default 'EUR',
   mfa_enabled boolean default false,
   created_at timestamptz default now(),
   updated_at timestamptz default now()

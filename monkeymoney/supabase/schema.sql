@@ -13,14 +13,14 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 create table if not exists public.profiles (
-    id uuid primary key default gen_random_uuid(),
-    user_id uuid not null unique references auth.users(id) on delete cascade,
+    id uuid primary key references auth.users(id) on delete cascade,
     full_name text not null,
     username text unique,
     avatar_url text,
     date_of_birth date,
     country text,
     currency text default 'EUR',
+    mfa_enabled boolean default false,
     created_at timestamptz default now(),
     updated_at timestamptz default now()
 );
@@ -165,7 +165,7 @@ alter table public.financial_tips enable row level security;
 alter table public.quiz_questions enable row level security;
 
 create policy "owner profiles" on public.profiles
-for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+for all using (auth.uid() = id) with check (auth.uid() = id);
 create policy "owner expense categories" on public.expense_categories
 for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "owner income categories" on public.income_categories
@@ -191,3 +191,22 @@ values
 ('Regra 50/30/20', 'Distribui rendimento: 50% necessidades, 30% desejos, 20% poupanca.', 'orcamento', 'easy'),
 ('Evita juros altos', 'Paga dividas com taxa de juro mais alta primeiro.', 'dividas', 'medium')
 on conflict do nothing;
+
+-- Function and trigger to automatically create profile on signup
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer as $$
+begin
+  insert into public.profiles (id, full_name)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'full_name', 'Utilizador')
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
