@@ -3,19 +3,11 @@
 import { createBrowserClient } from "@supabase/ssr";
 
 export function createClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://kjhcbzpsikeltmiwpire.supabase.co";
+  const key =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqaGNienBzaWtlbHRtaXdwaXJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNDIyODMsImV4cCI6MjA5MzgxODI4M30.M7l1hrRLzFkV5nzsEvLbSGaseoqJ4Zs7BSZ152hRZF4";
 
-  if (!url || url.includes("placeholder") || !key || key.includes("placeholder")) {
-    console.error(
-      "⚠️ ERRO DE CONFIGURAÇÃO SUPABASE:\n" +
-      "O URL ou a Anon Key do Supabase não foram carregados corretamente!\n" +
-      "Por favor, verifica se o ficheiro '.env.local' está configurado e se REINICIASTE o servidor (Ctrl+C e 'npm run dev')."
-    );
-  }
-
-  return createBrowserClient(
-    url ?? "https://placeholder.supabase.co",
-    key ?? "public-anon-key-placeholder",
-  );
+  return createBrowserClient(url, key);
 }
